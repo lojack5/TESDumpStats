@@ -172,8 +172,11 @@ class Progress(object):
 
     def __enter__(self):
         return self
-    def __exit__(self, *args):
-        self.fill()
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            self.fill()
+        else:
+            print('')
 
 
 def main():
@@ -191,9 +194,12 @@ def main():
         to_dump = [x for x in (plugin, plugin+'.ghost')
                    if os.path.exists(x)]
     else:
-        # Only dump stats for Skyrim.esm and Update.esm
-        to_dump = [x.lower() for x in ('Skyrim.esm', 'Skyrim.esm.ghost',
-                                       'Update.esm', 'Update.esm.ghost')
+        # Only dump stats for offical plugins
+        to_dump = [x.lower()
+                   for y in ('Skyrim.esm', 'Update.esm',
+                             'Dawnguard.esm', 'Hearthfires.esm',
+                             'Dragonborn.esm')
+                   for x in (y, y+'.ghost')
                    if os.path.exists(x)]
     if not to_dump:
         print('Could not find any plugins to dump.  Are you sure TESDumpStats'
