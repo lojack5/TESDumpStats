@@ -3,7 +3,7 @@ TESDumpStats
 
 Dump very basic statistics about ES plugins (record counts, subrecord counts, etc)
 
-This is a command line utility only, with a few options.  TESDumpStats.py must be placed in the Skryim Data directory to run.  Eventually it will may be updated to be able to run from anywhere, and to be compatible with other TES games.  By default, TESDumpStats will dump data on Skyrim.esm and Update.esm only.  To change this behavior, follow the command line switches.
+This is a command line utility only, with a few options.  TESDumpStats.py must be placed in the Skryim Data directory to run.  Eventually it will may be updated to be able to run from anywhere, and to be compatible with other TES games.  By default, TESDumpStats will dump data on Skyrim.esm, Update.esm, and other official plugins only.  To change this behavior, follow the command line switches.
 
 * -a, --all
  
