@@ -34,3 +34,10 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Elder Scrolls files (for testing)
+*.esp
+*.esm
+
+# Default dump directory
+/TESDumpStats
