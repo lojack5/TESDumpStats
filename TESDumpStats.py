@@ -208,10 +208,17 @@ def formatSize(size):
 
 def printStats(stats, outDir, opts):
     outName = os.path.join(outDir, time.strftime('%Y-%m-%d_%H%M.%S_dump.txt'))
+    if not opts.split:
+        # Make sure combined output file is empty
+        if os.path.exists(outName):
+            os.remove(outName)
+        mode = 'a+'
+    else:
+        mode = 'w'
     for plugin in stats:
         if opts.split:
             outName = os.path.join(outDir, plugin+'.txt')
-        with open(outName, 'w') as outFile:
+        with open(outName, mode) as outFile:
             print(plugin, file=outFile)
             pstats = stats[plugin]
             print(' File size:', formatSize(pstats['size']), file=outFile)
