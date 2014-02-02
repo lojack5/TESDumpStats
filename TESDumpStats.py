@@ -187,7 +187,7 @@ class Progress(object):
         if exc_type is None:
             self.fill()
         else:
-            print('')
+            print('', file=self.outFile)
 
 
 def main():
