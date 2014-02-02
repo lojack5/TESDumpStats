@@ -121,13 +121,13 @@ class Progress(object):
         maxWidth = shutil.get_terminal_size()[0]
         # Calculate length of current message
         # +9 accounts for spacing, brackets, percentage, and one empty
-        # space to prevent scolling to the next line automatically
+        # space to prevent scrolling to the next line automatically
         width = len(self.prefix) + length + 9
         if width > maxWidth:
             extra = width - maxWidth
             # Too long, make things smaller
             if length > 20:
-                remove = length - min(20, length - extra)
+                remove = length - max(20, length - extra)
                 extra -= remove
                 length -= remove
             if extra > 0:
