@@ -334,7 +334,7 @@ def printRecordStats(stats, outFile):
             print('  Max Size:', maxsize, file=outFile)
         # Subrecords
         print('  Subrecords:', file=outFile)
-        for subtype in recStats:
+        for subtype in sorted(recStats):
             if subtype in ('count','sizes','compressed'):
                 continue
             subStats = recStats[subtype]
