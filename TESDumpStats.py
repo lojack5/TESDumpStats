@@ -37,7 +37,6 @@
 
 
 # Imports ---------------------------------------------------------------------
-import functools
 import traceback
 import datetime
 import binascii
@@ -46,7 +45,6 @@ import shutil
 import struct
 import time
 import zlib
-import copy
 import sys
 import re
 import os
