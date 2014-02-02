@@ -42,6 +42,7 @@ import traceback
 import datetime
 import binascii
 import argparse
+import shutil
 import struct
 import time
 import zlib
@@ -98,6 +99,81 @@ class FileReader(io.FileIO):
     def readInt16(self): return struct.unpack('h', self.read(2))[0]
     def readInt32(self): return struct.unpack('i', self.read(4))[0]
     def readInt64(self): return struct.unpack('q', self.read(8))[0]
+
+
+class Progress(object):
+    """Simple console-based progress bar."""
+    __slots__ = ('prefix', 'end', 'cur', 'length', 'outFile', 'percent',)
+
+    def __init__(self, prefix='', maxValue=100, length=20, percent=True, padPrefix=None, file=sys.stdout):
+        if padPrefix:
+            self.prefix = ('{:<%s}' % padPrefix).format(prefix)
+        else:
+            self.prefix = prefix
+        # Make sure it'll fit in the console
+        maxWidth = shutil.get_terminal_size()[0]
+        width = len(self.prefix) + length + 9 # 9 = other characters in progress bar
+        if width > maxWidth:
+            extra = width - maxWidth
+            # Too long, make things smaller
+            if length > 20:
+                remove = length - min(20, length - extra)
+                extra -= remove
+                length -= remove
+            if extra > 0:
+                # Still too much
+                remove = self.prefix[-extra:]
+                self.prefix = self.prefix[:-extra]
+                if remove != ' '*extra:
+                    # Had to remove some text
+                    self.prefix = self.prefix[:-3] + '...'
+        self.end = maxValue
+        self.length = length
+        self.cur = 0
+        self.outFile = file
+        self.percent = percent
+
+    def update(self):
+        """Increment progress by 1."""
+        self(self.cur+1)
+
+    def __call__(self, pos):
+        """Set progress bar to specified amount."""
+        self.cur = max(0, min(self.end, pos))
+        # Build progress bar:
+        percent = self.cur / self.end
+        filled = percent * self.length
+        partial = filled - int(filled)
+        filled = int(filled)
+        empty = self.length - filled - 1
+        bar = '#' * filled
+        if self.cur == 0:
+            bar += ' '
+        elif self.cur == self.end:
+            pass
+        elif partial < 0.25:
+            bar += ' '
+        elif partial < 0.50:
+            bar += '-'
+        elif partial < 0.75:
+            bar += '+'
+        else:
+            bar += '*'
+        bar += ' ' * empty
+        # Print
+        msg = '\r%s [%s]' % (self.prefix, bar)
+        if self.percent:
+            msg += '{:>4}%'.format(int(percent * 100))
+        print(msg, end='', file=self.outFile, flush=True)
+
+    def fill(self):
+        self(self.end)
+        print('', file=self.outFile)
+
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        self.fill()
 
 
 def main():
@@ -158,38 +234,44 @@ def main():
     # Start dumping
     print('Beginning dump.  Output directory:', outDir)
     stats = dict()
-    for plugin in to_dump:
-        s = stats.setdefault(plugin, dict())
-        dumpPlugin(plugin, s)
-    print('Dump complete.')
-    printStats(stats, outDir, opts)
+    padLength = max([len(x) for x in to_dump])
+    try:
+        for plugin in to_dump:
+            s = stats.setdefault(plugin, dict())
+            dumpPlugin(plugin, s, padLength)
+        printStats(stats, outDir, opts)
+        print('Dump complete.')
+    except KeyboardInterrupt:
+        print('Dump canceled.')
 
 
-def dumpPlugin(fileName, stats):
+def dumpPlugin(fileName, stats, padLength):
     """Gets stats about records, etc from fileName, updates stats dict,
        then prints results to outFile."""
-    print(fileName)
     s = dict()
     # Get basic stats on the file
     stats['size'] = size = os.path.getsize(fileName)
     stats['time'] = os.path.getmtime(fileName)
-    try:
-        with FileReader(fileName, 'rb') as ins:
-            # Calculate CRC32
-            crc = 0
-            while ins.tell() < size:
-                crc = binascii.crc32(ins.read(2097152), crc)
-            crc = crc & 0xFFFFFFFF
-            stats['crc'] = crc
-            ins.seek(0)
-            # No error checking, just assume everything is properly formed
-            s = stats['records'] = dict()
-            # Read TES4 record + GRUPs
-            while ins.tell() < size:
-                dumpGRUPOrRecord(ins, s, size)
-    except Exception as e:
-        print('ERROR: Unhandled exception\n')
-        traceback.print_exc()
+    with Progress(fileName, size, padPrefix=padLength) as progress:
+        try:
+            with FileReader(fileName, 'rb') as ins:
+                # Calculate CRC32
+                crc = 0
+                while ins.tell() < size:
+                    crc = binascii.crc32(ins.read(2097152), crc)
+                crc = crc & 0xFFFFFFFF
+                stats['crc'] = crc
+                ins.seek(0)
+                # No error checking, just assume everything is properly formed
+                s = stats['records'] = dict()
+                # Read TES4 record + GRUPs
+                while ins.tell() < size:
+                    dumpGRUPOrRecord(ins, s, size, progress)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            print('ERROR: Unhandled exception\n')
+            traceback.print_exc()
 
 
 def formatSize(size):
@@ -311,8 +393,9 @@ def printStats(stats, outDir, opts):
             printRecordStats(allstats, outFile)
 
 
-def dumpGRUPOrRecord(ins, stats, end):
+def dumpGRUPOrRecord(ins, stats, end, progress):
     pos = ins.tell()
+    progress(pos)
     if pos+24 > end:
         ins.seek(end)
         return
@@ -332,7 +415,7 @@ def dumpGRUPOrRecord(ins, stats, end):
             return
         # Data
         while ins.tell() < pos+size:
-            dumpGRUPOrRecord(ins, stats, pos+size)
+            dumpGRUPOrRecord(ins, stats, pos+size, progress)
     else:
         Type = grup.decode('ascii')
         dataSize = ins.readUInt32()
