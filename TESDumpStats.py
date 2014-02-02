@@ -416,7 +416,7 @@ def printStats(stats, outDir, opts):
         if opts.split:
             outName = os.path.join(outDir, 'combined_stats.txt')
         with open(outName, mode) as outFile:
-            print(' Combined stats:', file=outFile)
+            print('Combined stats:', file=outFile)
             printRecordStats(allstats, outFile)
 
 
