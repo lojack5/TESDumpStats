@@ -206,6 +206,57 @@ def formatSize(size):
     return '%i %s' % (int(size), suffix)
 
 
+def printRecordStats(stats, outFile):
+    for Type in sorted(stats):
+        print('', Type, file=outFile)
+        recStats = stats[Type]
+        count = recStats['count']
+        print('  Count:', count, file=outFile)
+        sizes = recStats['sizes']
+        minsize = min(sizes)
+        maxsize = max(sizes)
+        compressed = recStats.get('compressed', 0)
+        if compressed == count:
+            print('  All compressed', file=outFile)
+        elif compressed > 0:
+            print('  Compressed: %i / %i' % (compressed, count), file=outFile)
+        else:
+            print('  None compressed', file=outFile)
+        if minsize == maxsize:
+            print('  Size:', maxsize, file=outFile)
+        else:
+            print('  Min Size:', minsize, file=outFile)
+            print('  Max Size:', maxsize, file=outFile)
+        # Subrecords
+        print('  Subrecords:', file=outFile)
+        for subtype in recStats:
+            if subtype in ('count','sizes','compressed'):
+                continue
+            subStats = recStats[subtype]
+            subCounts = subStats['counts']
+            if len(subCounts) == count:
+                # At least 1 per record
+                print('  ', subtype, '- Required', file=outFile)
+            else:
+                print('  ', subtype, '- %i / %i records' % (len(subCounts), count), file=outFile)
+            maxcount = max(subCounts)
+            mincount = min(subCounts)
+            if maxcount == mincount:
+                print('    Count:', maxcount, file=outFile)
+            else:
+                print('    Min Count:', mincount, file=outFile)
+                print('    Max Count:', maxcount, file=outFile)
+            sizes = subStats['sizes']
+            maxsize = max(sizes)
+            minsize = min(sizes)
+            if maxsize == minsize:
+                print('    Size:', maxsize, file=outFile)
+            else:
+                print('    Min Size:', minsize, file=outFile)
+                print('    Max Size:', maxsize, file=outFile)
+        print('', file=outFile)
+
+
 def printStats(stats, outDir, opts):
     outName = os.path.join(outDir, time.strftime('%Y-%m-%d_%H%M.%S_dump.txt'))
     if not opts.split:
@@ -224,55 +275,7 @@ def printStats(stats, outDir, opts):
             print(' File size:', formatSize(pstats['size']), file=outFile)
             print(' File Date:', datetime.datetime.fromtimestamp(pstats['time']), file=outFile)
             print(' File CRC: 0x%X' % pstats['crc'], file=outFile)
-            for Type in sorted(pstats['records']):
-                print('', Type, file=outFile)
-                recStats = pstats['records'][Type]
-                count = recStats['count']
-                print('  Count:', recStats['count'], file=outFile)
-                sizes = recStats['sizes']
-                minsize = min(sizes)
-                maxsize = max(sizes)
-                compressed = recStats.get('compressed',0)
-                if compressed == count:
-                    print('  All compressed', file=outFile)
-                elif compressed > 0:
-                    print('  Compressed: %i / %i' % (compressed, count), file=outFile)
-                else:
-                    print('  None compressed', file=outFile)
-                if minsize == maxsize:
-                    print('  Size:', maxsize, file=outFile)
-                else:
-                    print('  Min Size:', minsize, file=outFile)
-                    print('  Max Size:', maxsize, file=outFile)
-                # Subrecords
-                print('  Subrecords:', file=outFile)
-                for subtype in recStats:
-                    if subtype in ('count','sizes','compressed'):
-                        continue
-                    print('  ', subtype, file=outFile)
-                    subStats = recStats[subtype]
-                    # Counts
-                    subcounts = subStats['counts']
-                    if len(subcounts) == count:
-                        # At least 1 per record
-                        print('    Required', file=outFile)
-                    maxcount = max(subcounts)
-                    mincount = min(subcounts)
-                    if maxcount == mincount:
-                        print('    Count:', maxcount, file=outFile)
-                    else:
-                        print('    Min Count:', mincount, file=outFile)
-                        print('    Max Count:', maxcount, file=outFile)
-                    # Sizes
-                    sizes = subStats['sizes']
-                    maxsize = max(sizes)
-                    minsize = min(sizes)
-                    if maxsize == minsize:
-                        print('    Size:', maxsize, file=outFile)
-                    else:
-                        print('    Min Size:', minsize, file=outFile)
-                        print('    Max Size:', maxsize, file=outFile)
-            print('',file=outFile)
+            printRecordStats(pstats['records'], outFile)
 
 
 def dumpGRUPOrRecord(ins, stats, end):
