@@ -113,7 +113,7 @@ def main():
         if plugin.endswith('.ghost'):
             plugin = plugin[-6:]
         to_dump = [x for x in (plugin, plugin+'.ghost')
-                   if os.path.exists(plugin)]
+                   if os.path.exists(x)]
     else:
         # Only dump stats for Skyrim.esm and Update.esm
         to_dump = [x.lower() for x in ('Skyrim.esm', 'Skyrim.esm.ghost',
