@@ -402,7 +402,7 @@ def printStats(stats, outDir, opts):
         with open(outName, mode) as outFile:
             print(plugin, file=outFile)
             pstats = stats[plugin]
-            print(' File size:', formatSize(pstats['size']), file=outFile)
+            print(' File Size:', formatSize(pstats['size']), file=outFile)
             print(' File Date:',
                   datetime.datetime.fromtimestamp(pstats['time']),
                   file=outFile)
@@ -414,7 +414,7 @@ def printStats(stats, outDir, opts):
         if opts.split:
             outName = os.path.join(outDir, 'combined_stats.txt')
         with open(outName, mode) as outFile:
-            print('Combined stats:', file=outFile)
+            print('Combined Stats:', file=outFile)
             printRecordStats(allstats, outFile)
 
 
