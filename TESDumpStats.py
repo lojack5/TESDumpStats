@@ -105,14 +105,18 @@ class Progress(object):
     """Simple console-based progress bar."""
     __slots__ = ('prefix', 'end', 'cur', 'length', 'outFile', 'percent',)
 
-    def __init__(self, prefix='', maxValue=100, length=20, percent=True, padPrefix=None, file=sys.stdout):
+    def __init__(self, prefix='', maxValue=100, length=20, percent=True,
+                 padPrefix=None, file=sys.stdout):
         if padPrefix:
             self.prefix = ('{:<%s}' % padPrefix).format(prefix)
         else:
             self.prefix = prefix
         # Make sure it'll fit in the console
         maxWidth = shutil.get_terminal_size()[0]
-        width = len(self.prefix) + length + 9 # 9 = other characters in progress bar
+        # Calculate length of current message
+        # +9 accounts for spacing, brackets, percentage, and one empty
+        # space to prevent scolling to the next line automatically
+        width = len(self.prefix) + length + 9
         if width > maxWidth:
             extra = width - maxWidth
             # Too long, make things smaller
@@ -172,6 +176,7 @@ class Progress(object):
 
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
             self.fill()
@@ -326,7 +331,9 @@ def printRecordStats(stats, outFile):
                 # At least 1 per record
                 print('  ', subtype, '- Required', file=outFile)
             else:
-                print('  ', subtype, '- %i / %i records' % (len(subCounts), count), file=outFile)
+                print('  ', subtype,
+                      '- %i / %i records' % (len(subCounts), count),
+                      file=outFile)
             maxcount = max(subCounts)
             mincount = min(subCounts)
             if maxcount == mincount:
@@ -386,7 +393,9 @@ def printStats(stats, outDir, opts):
             print(plugin, file=outFile)
             pstats = stats[plugin]
             print(' File size:', formatSize(pstats['size']), file=outFile)
-            print(' File Date:', datetime.datetime.fromtimestamp(pstats['time']), file=outFile)
+            print(' File Date:',
+                  datetime.datetime.fromtimestamp(pstats['time']),
+                  file=outFile)
             print(' File CRC: 0x%X' % pstats['crc'], file=outFile)
             recStats = pstats['records']
             printRecordStats(recStats, outFile)
