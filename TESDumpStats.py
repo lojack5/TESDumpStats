@@ -252,13 +252,16 @@ def main():
         return
 
     # Start dumping
-    print('Beginning dump.  Output directory:', outDir)
+    print('Beginning dump.')
+    print('Output directory:', outDir)
+    print('')
     stats = dict()
     padLength = max([len(x) for x in to_dump])
     try:
         for plugin in to_dump:
             s = stats.setdefault(plugin, dict())
             dumpPlugin(plugin, s, padLength)
+        print('Writing statistics...')
         printStats(stats, outDir, opts)
         print('Dump complete.')
     except KeyboardInterrupt:
