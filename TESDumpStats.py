@@ -215,7 +215,7 @@ def printRecordStats(stats, outFile):
         sizes = recStats['sizes']
         minsize = min(sizes)
         maxsize = max(sizes)
-        compressed = recStats.get('compressed', 0)
+        compressed = recStats['compressed']
         if compressed == count:
             print('  All compressed', file=outFile)
         elif compressed > 0:
@@ -257,6 +257,30 @@ def printRecordStats(stats, outFile):
         print('', file=outFile)
 
 
+def mergeRecordStats(dest, source):
+    for Type in source:
+        if Type not in dest:
+            dest[Type] = source[Type]
+        else:
+            destRecStats = dest[Type]
+            sourceRecStats = source[Type]
+            # Merge
+            destRecStats['count'] += sourceRecStats['count']
+            destRecStats['sizes'].extend(sourceRecStats['sizes'])
+            destRecStats['compressed'] += sourceRecStats['compressed']
+            # Subrecords
+            for subType in sourceRecStats:
+                if subType in ('compressed','sizes','count'):
+                    continue
+                if subType not in destRecStats:
+                    destRecStats[subType] = sourceRecStats[subType]
+                else:
+                    destSubStats = destRecStats[subType]
+                    sourceSubStats = sourceRecStats[subType]
+                    destSubStats['counts'].extend(sourceSubStats['counts'])
+                    destSubStats['sizes'].extend(sourceSubStats['sizes'])
+
+
 def printStats(stats, outDir, opts):
     outName = os.path.join(outDir, time.strftime('%Y-%m-%d_%H%M.%S_dump.txt'))
     if not opts.split:
@@ -266,6 +290,7 @@ def printStats(stats, outDir, opts):
         mode = 'a+'
     else:
         mode = 'w'
+    allstats = dict()
     for plugin in stats:
         if opts.split:
             outName = os.path.join(outDir, plugin+'.txt')
@@ -275,7 +300,15 @@ def printStats(stats, outDir, opts):
             print(' File size:', formatSize(pstats['size']), file=outFile)
             print(' File Date:', datetime.datetime.fromtimestamp(pstats['time']), file=outFile)
             print(' File CRC: 0x%X' % pstats['crc'], file=outFile)
-            printRecordStats(pstats['records'], outFile)
+            recStats = pstats['records']
+            printRecordStats(recStats, outFile)
+            mergeRecordStats(allstats, recStats)
+    if len(stats) > 1:
+        if opts.split:
+            outName = os.path.join(outDir, 'combined_stats.txt')
+        with open(outName, mode) as outFile:
+            print(' Combined stats:', file=outFile)
+            printRecordStats(allstats, outFile)
 
 
 def dumpGRUPOrRecord(ins, stats, end):
@@ -313,13 +346,14 @@ def dumpGRUPOrRecord(ins, stats, end):
             s = stats.setdefault(Type, dict())
             num = s.get('count', 0)
             s['count'] = num + 1
+            num = s.get('compressed', 0)
             data = ins.read(dataSize)
             if flags & 0x00040000:
                 # Data is compressed
                 uncompSize = struct.unpack('I', data[:4])
                 data = zlib.decompress(data[4:])
-                num = s.get('compressed', 0)
-                s['compressed'] = num + 1
+                num += 1
+            s['compressed'] = num
             s.setdefault('sizes',[]).append(len(data))
             dumpSubRecords(data, s)
         # Ensure we're at the end of the record
