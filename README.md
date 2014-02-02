@@ -7,7 +7,7 @@ This is a command line utility only, with a few options.  TESDumpStats.py must b
 
 * -a, --all
  
- After processing Skyrim.esm and Update.esm, the program will proceed to dump stats on all remaining plugins in the Data directory.
+ After processing Skyrim.esm, Update.esm and other official plugins, the program will proceed to dump stats on all remaining plugins in the Data directory.
 
 * -p 'plugin_name', --plugin 'plugin_name'
 

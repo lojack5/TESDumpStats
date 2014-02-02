@@ -57,6 +57,14 @@ import io
 rePlugin = re.compile(r'\.es[mp](.ghost)?$', re.M|re.U|re.I)
 
 
+# List of official plugin names
+officialPlugins = [x.lower()
+                   for y in ('Skyrim.esm', 'Update.esm',
+                             'Dawnguard.esm', 'Hearthfires.esm',
+                             'Dragonborn.esm')
+                   for x in (y, y+'.ghost')]
+
+
 # Command line parser
 parser = argparse.ArgumentParser(prog='TESDumpStats',
                                   add_help=True)
@@ -191,6 +199,12 @@ def main():
         # Dump stats for every plugin
         to_dump = [x.lower() for x in os.listdir() if rePlugin.search(x)]
         to_dump.sort()
+        # Move Skryim.esm/Update.esm first
+        for plugin in reversed(officialPlugins):
+            if plugin in to_dump:
+                i = to_dump.index(plugin)
+                del to_dump[i]
+                to_dump.insert(0, plugin)
     elif opts.plugin:
         # Dump specified plugin
         plugin = opts.plugin.lower()
@@ -200,12 +214,7 @@ def main():
                    if os.path.exists(x)]
     else:
         # Only dump stats for offical plugins
-        to_dump = [x.lower()
-                   for y in ('Skyrim.esm', 'Update.esm',
-                             'Dawnguard.esm', 'Hearthfires.esm',
-                             'Dragonborn.esm')
-                   for x in (y, y+'.ghost')
-                   if os.path.exists(x)]
+        to_dump = [x for x in officialPlugins if os.path.exists(x)]
     if not to_dump:
         print('Could not find any plugins to dump.  Are you sure TESDumpStats'
               ' is in the Skyrim Data directory?')
