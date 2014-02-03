@@ -1,6 +1,6 @@
 # !/usr/bin/python3.3
 #
-# BSD License and Copywrite Notice ============================================
+# BSD License and Copyright Notice ============================================
 #  Copyright (c) 2014, Lojack
 #  All rights reserved.
 #
