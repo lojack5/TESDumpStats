@@ -92,9 +92,31 @@ officialPlugins = [x.lower()
                              'LonesomeRoad.esm',
                              'MercenaryPack.esm',
                              'OldWorldBlues.esm',
-                             'TribalPack.esm'
+                             'TribalPack.esm',
+                             'Oblivion.esm', # Oblivion
+                             # 'DLCShiveringIsles.esp, # dummy plugin
+                             'DLCFrostcrag.esp',
+                             'DLCBattlehornCastle.esp',
+                             'DLCSpellTomes.esp',
+                             'DLCMehrunesRazor.esp',
+                             'DLCOrrery.esp',
+                             'DLCThievesDen.esp',
+                             'DLCHorseArmor.esp',
+                             'DLCVileLair.esp',
+                             'Knights.esp',
                              )
                    for x in (y, y+'.ghost')]
+
+
+# Oblivon/Resf ot the Games format specific data
+gameFormat = {
+    # Oblivion
+    True: {'headerSize': 20,
+           },
+    # non-Oblivion
+    False: {'headerSize': 24,
+            },
+    }
 
 
 # Command line parser
@@ -122,6 +144,11 @@ parser.add_argument('-s', '--split',
                     action='store_true',
                     default=False,
                     help='Create a separate dump file for each plugin.')
+parser.add_argument('-O', '--Oblivion', '--oblivion',
+                    dest='oblivion',
+                    action='store_true',
+                    default=False,
+                    help='Process all plugins as Oblivion plugins.')
 
 
 class FileReader(io.FileIO):
@@ -229,7 +256,7 @@ class Progress(object):
 
 def main():
     """Main function, fires everything off."""
-    opts, extra = parser.parse_known_args()
+    opts = parser.parse_args()
     if opts.all:
         # Dump stats for every plugin
         to_dump = [x.lower() for x in os.listdir() if rePlugin.search(x)]
@@ -295,7 +322,7 @@ def main():
     try:
         for plugin in to_dump:
             s = stats.setdefault(plugin, dict())
-            dumpPlugin(plugin, s, padLength)
+            dumpPlugin(plugin, s, padLength, opts.oblivion)
         print('Writing statistics...')
         printStats(stats, outDir, opts)
         print('Dump complete.')
@@ -303,10 +330,12 @@ def main():
         print('Dump canceled.')
 
 
-def dumpPlugin(fileName, stats, padLength):
+def dumpPlugin(fileName, stats, padLength, oblivion=False):
     """Gets stats about records, etc from fileName, updates stats dict,
        then prints results to outFile."""
     s = dict()
+    # GRUP/plugin header size
+    headerSize = gameFormat[oblivion]['headerSize']
     # Get basic stats on the file
     stats['size'] = size = os.path.getsize(fileName)
     stats['time'] = os.path.getmtime(fileName)
@@ -324,7 +353,7 @@ def dumpPlugin(fileName, stats, padLength):
                 s = stats['records'] = dict()
                 # Read TES4 record + GRUPs
                 while ins.tell() < size:
-                    dumpGRUPOrRecord(ins, s, size, progress)
+                    dumpGRUPOrRecord(ins, s, size, progress, oblivion, headerSize)
         except KeyboardInterrupt:
             raise
         except Exception as e:
@@ -455,37 +484,39 @@ def printStats(stats, outDir, opts):
             printRecordStats(allstats, outFile)
 
 
-def dumpGRUPOrRecord(ins, stats, end, progress):
+def dumpGRUPOrRecord(ins, stats, end, progress, oblivion, headerSize):
     pos = ins.tell()
     progress(pos)
-    if pos+24 > end:
+    if pos+headerSize > end:
         ins.seek(end)
         return
     grup = ins.read(4)
     if grup == b'GRUP':
         # It's a GRUP
-        size = ins.readUInt32() - 24
+        size = ins.readUInt32() - headerSize
         label = ins.read(4)
         Type = ins.readInt32()
         stamp = ins.readUInt16()
         unk1 = ins.readUInt16()
-        version = ins.readUInt16()
-        unk2 = ins.readUInt16()
+        if not oblivion:
+            version = ins.readUInt16()
+            unk2 = ins.readUInt16()
         pos = ins.tell()
         if pos+size > end:
             ins.seek(end)
             return
         # Data
         while ins.tell() < pos+size:
-            dumpGRUPOrRecord(ins, stats, pos+size, progress)
+            dumpGRUPOrRecord(ins, stats, pos+size, progress, oblivion, headerSize)
     else:
         Type = grup.decode('ascii')
         dataSize = ins.readUInt32()
         flags = ins.readUInt32()
         id = ins.readUInt32()
         revision = ins.readUInt32()
-        version = ins.readUInt16()
-        unk = ins.readUInt16()
+        if not oblivion:
+            version = ins.readUInt16()
+            unk = ins.readUInt16()
         if not flags & 0x20: # Not deleted
             # Data
             s = stats.setdefault(Type, dict())
@@ -502,7 +533,7 @@ def dumpGRUPOrRecord(ins, stats, end, progress):
             s.setdefault('sizes',[]).append(len(data))
             dumpSubRecords(data, s)
         # Ensure we're at the end of the record
-        ins.seek(pos+dataSize+24)
+        ins.seek(pos+dataSize+headerSize)
 
 
 def dumpSubRecords(data, stats):
