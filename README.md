@@ -23,4 +23,4 @@ This is a command line utility only, with a few options.  TESDumpStats.py must b
 
 * -O, --Oblivion, --oblivion
 
-  By default, the programs assumes plugins are written in the format of Fallout 3, Fallout: New Vegas, or Skyrim.  Use this switch to specify the Oblivion format (for processing Oblivion's plugins).
+  By default, the program assumes plugins are written in the format of Fallout 3, Fallout: New Vegas, or Skyrim.  Use this switch to specify the Oblivion format (for processing Oblivion's plugins).

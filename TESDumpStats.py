@@ -108,7 +108,7 @@ officialPlugins = [x.lower()
                    for x in (y, y+'.ghost')]
 
 
-# Oblivon/Resf ot the Games format specific data
+# Oblivon/Rest of the Games format specific data
 gameFormat = {
     # Oblivion
     True: {'headerSize': 20,
