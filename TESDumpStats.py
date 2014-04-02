@@ -1,4 +1,4 @@
-# !/usr/bin/python3.3
+# !/usr/bin/python3
 #
 # BSD License and Copyright Notice ============================================
 #  Copyright (c) 2014, Lojack
@@ -57,9 +57,28 @@ rePlugin = re.compile(r'\.es[mp](.ghost)?$', re.M|re.U|re.I)
 
 # List of official plugin names
 officialPlugins = [x.lower()
-                   for y in ('Skyrim.esm', 'Update.esm',
-                             'Dawnguard.esm', 'Hearthfires.esm',
-                             'Dragonborn.esm')
+                   for y in ('Skyrim.esm', # Skyrim
+                             'Update.esm',
+                             'Dawnguard.esm', 
+                             'Hearthfires.esm',
+                             'Dragonborn.esm',
+                             'Fallout3.esm', # Fallout 3
+                             'Anchorage.esm',
+                             'BrokenSteel.esm',
+                             'PointLookout.esm',
+                             'ThePitt.esm',
+                             'Zeta.esm',
+                             'FalloutNV.esm', # Fallout New Vegas
+                             'CaravanPack.esm',
+                             'ClassicPack.esm',
+                             'DeadMoney.esm',
+                             'GunRunnersArsenal.esm',
+                             'HonestHearts.esm',
+                             'LonesomeRoad.esm',
+                             'MercenaryPack.esm',
+                             'OldWorldBlues.esm',
+                             'TribalPack.esm'
+                             )
                    for x in (y, y+'.ghost')]
 
 
@@ -118,7 +137,10 @@ class Progress(object):
         else:
             self.prefix = prefix
         # Make sure it'll fit in the console
-        maxWidth = shutil.get_terminal_size()[0]
+        try:
+            maxWidth = shutil.get_terminal_size()[0]
+        except:
+            maxWidth = 80
         # Calculate length of current message
         # +9 accounts for spacing, brackets, percentage, and one empty
         # space to prevent scrolling to the next line automatically
