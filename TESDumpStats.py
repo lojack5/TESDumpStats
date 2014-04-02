@@ -35,6 +35,22 @@
 """Everything included into a single source file, so it's easy to copy/paste
    into a directory and run and cleanup afterwards."""
 
+# Python Version Check --------------------------------------------------------
+#  Cannot do this via the shebang, since 3.3 or 3.4 are both valid (and newer
+#  version when they come out).  So instead have to specify 3.x on the shebang
+#  and manually check versions here.
+#   Python 3.1 and older:
+#    - does not have argparse
+#   Python 3.2 and older:
+#    - does not have shutil.get_terminal_size
+#    - does not have 'flush' as a keyword for the print function
+import sys
+
+print("Running on Python {0}.{1}.{2}".format(*sys.version_info))
+if sys.version_info < (3,3):
+    print("TESDumpStats requires Python 3.3 or higher.")
+    sys.exit(0)
+
 
 # Imports ---------------------------------------------------------------------
 import traceback
@@ -45,7 +61,6 @@ import shutil
 import struct
 import time
 import zlib
-import sys
 import re
 import os
 import io
